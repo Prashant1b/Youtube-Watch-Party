@@ -7,7 +7,7 @@ import { ParticipantList } from "./ParticipantList";
 import { Chat } from "./Chat";
 import { RequestBanner } from "./RequestBanner";
 
-const serverUrl = import.meta.env.URL ?? "http://localhost:4000";
+const serverUrl = import.meta.env.URL ?? "https://youtube-watch-party-to2q.onrender.com";
 const guestIdKey = "guestId";
 
 function guestId() {

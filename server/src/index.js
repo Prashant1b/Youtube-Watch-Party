@@ -13,7 +13,7 @@ import { registerSocketHandlers } from "./handlers/socketHandlers.js";
 const app = express();
 const server = http.createServer(app);
 const port = Number(process.env.PORT ?? 4000);
-const clientUrl = process.env.CLIENT_URL ?? "http://localhost:5173";
+const clientUrl = process.env.CLIENT_URL ?? "https://youtube-watch-party-navy.vercel.app/";
 const rooms = new RoomManager();
 
 app.use(cors({ origin: clientUrl, credentials: true }));

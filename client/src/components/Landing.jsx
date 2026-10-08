@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Clapperboard, LogIn, Plus, ShieldCheck, UserRound, Users, Video } from "lucide-react";
 
-const serverUrl = import.meta.env.URL ?? "http://localhost:4000";
+const serverUrl = import.meta.env.URL ?? "https://youtube-watch-party-to2q.onrender.com";
 const tokenKey = "token";
 const guestIdKey = "guestId";
 
