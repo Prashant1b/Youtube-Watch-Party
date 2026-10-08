@@ -2,7 +2,7 @@ import { createContext, useContext, useMemo } from "react";
 import { io } from "socket.io-client";
 
 const SocketContext = createContext(null);
-const serverUrl = import.meta.env.VITE_SERVER_URL ?? "http://localhost:4000";
+const serverUrl = import.meta.env.URL ?? "http://localhost:4000";
 
 export function SocketProvider({ children }) {
   const socket = useMemo(() => io(serverUrl, {
