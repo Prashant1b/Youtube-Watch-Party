@@ -28,6 +28,22 @@ function guardHost(socket, room, userId) {
   return true;
 }
 
+function roomUserId(socket, roomId) {
+  return socket.data.user?.userId ?? socket.data.guestRooms?.[roomId] ?? socket.id;
+}
+
+async function saveRoomState(room) {
+  await RoomModel.updateOne(
+    { roomId: room.roomId },
+    {
+      videoId: room.state.videoId,
+      playState: room.state.playState,
+      currentTime: room.state.currentTime,
+      stateUpdatedAt: room.state.updatedAt
+    }
+  );
+}
+
 export function registerSocketHandlers(io, rooms) {
   io.use((socket, next) => {
     const token = socket.handshake.auth?.token;
@@ -83,40 +99,43 @@ export function registerSocketHandlers(io, rooms) {
 
     socket.on("play", async ({ roomId, time }) => {
       const room = await withRoom(socket, rooms, roomId);
-      const userId = socket.data.user?.userId ?? socket.id;
+      const userId = roomUserId(socket, roomId);
       if (!room || !guardControl(socket, room, userId)) return;
       room.setPlayState("playing", time);
+      await saveRoomState(room);
       room.broadcast(io, "sync_state", room.syncState());
     });
 
     socket.on("pause", async ({ roomId, time }) => {
       const room = await withRoom(socket, rooms, roomId);
-      const userId = socket.data.user?.userId ?? socket.id;
+      const userId = roomUserId(socket, roomId);
       if (!room || !guardControl(socket, room, userId)) return;
       room.setPlayState("paused", time);
+      await saveRoomState(room);
       room.broadcast(io, "sync_state", room.syncState());
     });
 
     socket.on("seek", async ({ roomId, time }) => {
       const room = await withRoom(socket, rooms, roomId);
-      const userId = socket.data.user?.userId ?? socket.id;
+      const userId = roomUserId(socket, roomId);
       if (!room || !guardControl(socket, room, userId)) return;
       room.seek(time);
+      await saveRoomState(room);
       room.broadcast(io, "sync_state", room.syncState());
     });
 
     socket.on("change_video", async ({ roomId, videoId }) => {
       const room = await withRoom(socket, rooms, roomId);
-      const userId = socket.data.user?.userId ?? socket.id;
+      const userId = roomUserId(socket, roomId);
       if (!room || !guardControl(socket, room, userId)) return;
       room.changeVideo(videoId);
-      await RoomModel.updateOne({ roomId }, { videoId });
+      await saveRoomState(room);
       room.broadcast(io, "sync_state", room.syncState());
     });
 
     socket.on("assign_role", async ({ roomId, userId, role }) => {
       const room = await withRoom(socket, rooms, roomId);
-      const actorId = socket.data.user?.userId ?? socket.id;
+      const actorId = roomUserId(socket, roomId);
       if (!room || !guardHost(socket, room, actorId) || role === "host") return;
       room.assignRole(userId, role);
       room.broadcast(io, "role_assigned", { participants: room.participantsList() });
@@ -124,7 +143,7 @@ export function registerSocketHandlers(io, rooms) {
 
     socket.on("remove_participant", async ({ roomId, userId }) => {
       const room = await withRoom(socket, rooms, roomId);
-      const actorId = socket.data.user?.userId ?? socket.id;
+      const actorId = roomUserId(socket, roomId);
       if (!room || !guardHost(socket, room, actorId) || userId === actorId) return;
       const removed = room.remove(userId);
       if (removed) io.to(removed.socketId).emit("participant_removed", { roomId });
@@ -133,7 +152,7 @@ export function registerSocketHandlers(io, rooms) {
 
     socket.on("transfer_host", async ({ roomId, userId }) => {
       const room = await withRoom(socket, rooms, roomId);
-      const actorId = socket.data.user?.userId ?? socket.id;
+      const actorId = roomUserId(socket, roomId);
       if (!room || !guardHost(socket, room, actorId)) return;
       room.transferHost(userId);
       await RoomModel.updateOne({ roomId }, { hostId: userId });
@@ -142,7 +161,7 @@ export function registerSocketHandlers(io, rooms) {
 
     socket.on("request_change", async ({ roomId, type, payload }) => {
       const room = await withRoom(socket, rooms, roomId);
-      const userId = socket.data.user?.userId ?? socket.id;
+      const userId = roomUserId(socket, roomId);
       if (!room) return;
       const request = room.createRequest(userId, type, payload);
       room.broadcast(io, "change_requested", request);
@@ -150,12 +169,13 @@ export function registerSocketHandlers(io, rooms) {
 
     socket.on("resolve_request", async ({ roomId, requestId, approved }) => {
       const room = await withRoom(socket, rooms, roomId);
-      const userId = socket.data.user?.userId ?? socket.id;
+      const userId = roomUserId(socket, roomId);
       if (!room || !guardControl(socket, room, userId)) return;
       const request = room.resolveRequest(requestId, approved);
       if (request?.type === "video" && approved && typeof request.payload.videoId === "string") {
-        room.changeVideo(request.payload.videoId);
-        await RoomModel.updateOne({ roomId }, { videoId: request.payload.videoId });
+        await saveRoomState(room);
+      } else if (approved) {
+        await saveRoomState(room);
       }
       room.broadcast(io, "request_resolved", { requestId, approved });
       if (approved) room.broadcast(io, "sync_state", room.syncState());
@@ -163,7 +183,7 @@ export function registerSocketHandlers(io, rooms) {
 
     socket.on("chat_message", async ({ roomId, text }) => {
       const room = await withRoom(socket, rooms, roomId);
-      const userId = socket.data.user?.userId ?? socket.id;
+      const userId = roomUserId(socket, roomId);
       const participant = room?.participant(userId);
       if (!room || !participant || !text?.trim()) return;
       room.broadcast(io, "chat_message", {

@@ -65,7 +65,7 @@ JWT_SECRET=replace-me
 ### Client
 
 ```text
-URL=http://localhost:4000
+VITE_SERVER_URL=http://localhost:4000
 ```
 
 ## Socket Architecture
@@ -160,7 +160,7 @@ client/dist
 Set:
 
 ```text
-URL
+VITE_SERVER_URL
 ```
 
 to the deployed server URL.

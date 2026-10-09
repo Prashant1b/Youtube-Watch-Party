@@ -1,13 +1,18 @@
 import jwt from "jsonwebtoken";
 
+const jwtSecret = process.env.JWT_SECRET;
+if (!jwtSecret) {
+  throw new Error("JWT_SECRET environment variable is required");
+}
+
 export function signToken(userId, username) {
-  return jwt.sign({ userId, username }, process.env.JWT_SECRET ?? "dev-secret", { expiresIn: "7d" });
+  return jwt.sign({ userId, username }, jwtSecret, { expiresIn: "7d" });
 }
 
 export function verifyToken(token) {
   if (!token) return undefined;
   try {
-    return jwt.verify(token, process.env.JWT_SECRET ?? "dev-secret");
+    return jwt.verify(token, jwtSecret);
   } catch {
     return undefined;
   }

@@ -18,8 +18,18 @@ export function useYouTubePlayer(videoId, onStateChange) {
   const containerRef = useRef(null);
   const playerRef = useRef(null);
   const suppressRef = useRef(false);
+  const readyRef = useRef(false);
+  const queuedCommandRef = useRef(null);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+
+  const runWhenReady = (command) => {
+    if (readyRef.current && playerRef.current?.seekTo) {
+      command(playerRef.current);
+      return;
+    }
+    queuedCommandRef.current = command;
+  };
 
   useEffect(() => {
     loadApi().then(() => {
@@ -28,7 +38,12 @@ export function useYouTubePlayer(videoId, onStateChange) {
         videoId,
         playerVars: { controls: 0, modestbranding: 1, rel: 0 },
         events: {
-          onReady: () => setDuration(playerRef.current.getDuration() || 0),
+          onReady: () => {
+            readyRef.current = true;
+            setDuration(playerRef.current.getDuration() || 0);
+            queuedCommandRef.current?.(playerRef.current);
+            queuedCommandRef.current = null;
+          },
           onStateChange: (event) => {
             if (suppressRef.current) return;
             if (event.data === window.YT.PlayerState.PLAYING) onStateChange("playing");
@@ -40,7 +55,7 @@ export function useYouTubePlayer(videoId, onStateChange) {
   }, []);
 
   useEffect(() => {
-    if (!playerRef.current?.loadVideoById) return;
+    if (!readyRef.current || !playerRef.current?.loadVideoById) return;
     suppressRef.current = true;
     playerRef.current.loadVideoById(videoId);
     playerRef.current.pauseVideo();
@@ -62,19 +77,23 @@ export function useYouTubePlayer(videoId, onStateChange) {
   const remote = useMemo(() => ({
     play(time) {
       suppressRef.current = true;
-      if (typeof time === "number") playerRef.current?.seekTo(time, true);
-      playerRef.current?.playVideo();
+      runWhenReady((player) => {
+        if (typeof time === "number") player.seekTo(time, true);
+        player.playVideo();
+      });
       setTimeout(() => { suppressRef.current = false; }, 400);
     },
     pause(time) {
       suppressRef.current = true;
-      if (typeof time === "number") playerRef.current?.seekTo(time, true);
-      playerRef.current?.pauseVideo();
+      runWhenReady((player) => {
+        if (typeof time === "number") player.seekTo(time, true);
+        player.pauseVideo();
+      });
       setTimeout(() => { suppressRef.current = false; }, 400);
     },
     seek(time) {
       suppressRef.current = true;
-      playerRef.current?.seekTo(time, true);
+      runWhenReady((player) => player.seekTo(time, true));
       setCurrentTime(time);
       setTimeout(() => { suppressRef.current = false; }, 400);
     }

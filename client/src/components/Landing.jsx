@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Clapperboard, LogIn, Plus, ShieldCheck, UserRound, Users, Video } from "lucide-react";
+import { serverUrl } from "../config";
 
-const serverUrl = import.meta.env.URL ?? "https://youtube-watch-party-to2q.onrender.com";
 const tokenKey = "token";
 const guestIdKey = "guestId";
 
@@ -153,13 +153,13 @@ export function Landing() {
         <div className="auth-panel">
           <div className="panel-heading">
             <h2>Start watching</h2>
-            <p>Create a room with login, or join with a room code.</p>
+            <p>Create a room instantly as guest, or login when you want a named account.</p>
           </div>
 
           <div className="stack">
             <div className="mode-card">
               <strong>Host a new room</strong>
-              <span>Login/register required so your room has a fixed host.</span>
+              <span>No login needed. Add username/password only if you want to save a session.</span>
             </div>
             <label>
               <span>Username</span>

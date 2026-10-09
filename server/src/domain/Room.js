@@ -7,13 +7,13 @@ export class Room {
   participants = new Map();
   requests = new Map();
 
-  constructor(roomId, hostId, videoId = "dQw4w9WgXcQ") {
+  constructor(roomId, hostId, videoId = "dQw4w9WgXcQ", savedState = {}) {
     this.roomId = roomId;
     this.hostId = hostId;
     this.state = {
-      playState: "paused",
-      currentTime: 0,
-      updatedAt: Date.now(),
+      playState: savedState.playState ?? "paused",
+      currentTime: savedState.currentTime ?? 0,
+      updatedAt: savedState.updatedAt ?? Date.now(),
       videoId
     };
   }

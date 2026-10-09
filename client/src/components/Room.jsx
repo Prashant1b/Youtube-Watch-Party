@@ -6,8 +6,8 @@ import { VideoPlayer } from "./VideoPlayer";
 import { ParticipantList } from "./ParticipantList";
 import { Chat } from "./Chat";
 import { RequestBanner } from "./RequestBanner";
+import { serverUrl } from "../config";
 
-const serverUrl = import.meta.env.URL ?? "https://youtube-watch-party-to2q.onrender.com";
 const guestIdKey = "guestId";
 
 function guestId() {
@@ -30,6 +30,7 @@ export function Room() {
   const [messages, setMessages] = useState([]);
   const [notice, setNotice] = useState("");
   const remoteRef = useRef();
+  const pendingSyncRef = useRef();
 
   const canControl = self?.role === "host" || self?.role === "moderator";
   const isHost = self?.role === "host";
@@ -53,6 +54,7 @@ export function Room() {
     };
     const sync = (payload) => {
       setState(payload);
+      pendingSyncRef.current = payload;
       if (payload.playState === "playing") remoteRef.current?.play(payload.currentTime);
       else remoteRef.current?.pause(payload.currentTime);
     };
@@ -119,7 +121,13 @@ export function Room() {
           onSeek={(time) => emit("seek", { time })}
           onChangeVideo={(videoId) => emit("change_video", { videoId })}
           onRequestChange={(type, payload) => emit("request_change", { type, payload })}
-          onRemoteReady={(remote) => { remoteRef.current = remote; }}
+          onRemoteReady={(remote) => {
+            remoteRef.current = remote;
+            const payload = pendingSyncRef.current;
+            if (!payload) return;
+            if (payload.playState === "playing") remote.play(payload.currentTime);
+            else remote.pause(payload.currentTime);
+          }}
         />
       </section>
       <aside className="sidebar">

@@ -13,7 +13,14 @@ import { registerSocketHandlers } from "./handlers/socketHandlers.js";
 const app = express();
 const server = http.createServer(app);
 const port = Number(process.env.PORT ?? 4000);
-const clientUrl = process.env.CLIENT_URL ?? "https://youtube-watch-party-navy.vercel.app/";
+const clientUrl = process.env.CLIENT_URL?.replace(/\/$/, "");
+if (!clientUrl) {
+  throw new Error("CLIENT_URL environment variable is required");
+}
+const mongoUri = process.env.MONGODB_URI;
+if (!mongoUri) {
+  throw new Error("MONGODB_URI environment variable is required");
+}
 const rooms = new RoomManager();
 
 app.use(cors({ origin: clientUrl, credentials: true }));
@@ -65,7 +72,7 @@ app.get("/api/rooms/:roomId", async (req, res) => {
 
 registerSocketHandlers(io, rooms);
 
-await mongoose.connect(process.env.MONGODB_URI ?? "mongodb://127.0.0.1:27017/youtube-watch-party");
+await mongoose.connect(mongoUri);
 server.listen(port, () => {
   console.log(`Server listening on ${port}`);
 });

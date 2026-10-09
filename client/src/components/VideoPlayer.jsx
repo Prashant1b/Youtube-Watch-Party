@@ -34,7 +34,7 @@ export function VideoPlayer({ videoId, canControl, playState, onPlay, onPause, o
         <div ref={player.containerRef} />
       </div>
       <ControlBar
-        disabled={!canControl}
+        canPlayPause={canControl}
         playing={playState === "playing"}
         currentTime={player.currentTime}
         duration={player.duration}

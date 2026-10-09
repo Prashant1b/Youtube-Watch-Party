@@ -12,7 +12,14 @@ export class RoomManager {
     while (await RoomModel.exists({ roomId })) roomId = roomCode();
     const room = new Room(roomId, hostId, videoId);
     this.rooms.set(roomId, room);
-    await RoomModel.create({ roomId, hostId, videoId });
+    await RoomModel.create({
+      roomId,
+      hostId,
+      videoId,
+      playState: room.state.playState,
+      currentTime: room.state.currentTime,
+      stateUpdatedAt: room.state.updatedAt
+    });
     return room;
   }
 
@@ -21,7 +28,11 @@ export class RoomManager {
     if (cached) return cached;
     const saved = await RoomModel.findOne({ roomId });
     if (!saved) return undefined;
-    const room = new Room(saved.roomId, saved.hostId, saved.videoId);
+    const room = new Room(saved.roomId, saved.hostId, saved.videoId, {
+      playState: saved.playState,
+      currentTime: saved.currentTime,
+      updatedAt: saved.stateUpdatedAt
+    });
     this.rooms.set(roomId, room);
     return room;
   }
