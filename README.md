@@ -168,7 +168,7 @@ to the deployed server URL.
 ### Live URL
 
 ```text
-https://your-watch-party-client.example.com
+https://youtube-watch-party-navy.vercel.app/
 ```
 
 ## Verification
