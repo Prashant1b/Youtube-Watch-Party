@@ -53,11 +53,11 @@ Server: `http://localhost:4000`
 ### Server
 
 ```text
-MONGODB_URI=mongodb://127.0.0.1:27017/youtube-watch-party
+MONGODB_URI
 
-PORT=4000
+PORT
 
-CLIENT_URL=http://localhost:5173
+CLIENT_URL
 
 JWT_SECRET=replace-me
 ```
@@ -65,7 +65,7 @@ JWT_SECRET=replace-me
 ### Client
 
 ```text
-VITE_SERVER_URL=http://localhost:4000
+VITE_SERVER_URL=
 ```
 
 ## Socket Architecture
